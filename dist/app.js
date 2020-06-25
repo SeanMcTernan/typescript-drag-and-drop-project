@@ -5,60 +5,69 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     else for (var i = decorators.length - 1; i >= 0; i--) if (d = decorators[i]) r = (c < 3 ? d(r) : c > 3 ? d(target, key, r) : d(target, key)) || r;
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
-const registeredValidators = {};
-function Required(target, propName) {
-    registeredValidators[target.constructor.name] = Object.assign(Object.assign({}, registeredValidators[target.constructor.name]), { [propName]: [...registeredValidators[target.constructor.name][propName], 'required'] });
+function autobind(_, _2, descriptor) {
+    const originalMethod = descriptor.value;
+    const adjDescriptor = {
+        configurable: true,
+        get() {
+            const boundFn = originalMethod.bind(this);
+            return boundFn;
+        },
+    };
+    return adjDescriptor;
 }
-function PositiveNumber(target, propName) {
-    registeredValidators[target.constructor.name] = Object.assign(Object.assign({}, registeredValidators[target.constructor.name]), { [propName]: [...registeredValidators[target.constructor.name][propName], 'positive'] });
-}
-function validate(obj) {
-    const objValidatorsConfig = registeredValidators[obj.constructor.name];
-    if (!objValidatorsConfig) {
-        return true;
-    }
-    let isValid = true;
-    for (const prop in objValidatorsConfig) {
-        console.log(prop);
-        for (const validator of objValidatorsConfig[prop]) {
-            switch (validator) {
-                case 'required':
-                    isValid = isValid && !!obj[prop];
-                    break;
-                case 'positive':
-                    isValid = isValid && !!obj[prop];
-                    break;
+let ProjectInput = (() => {
+    class ProjectInput {
+        constructor() {
+            this.templateElement = document.getElementById("project-input");
+            this.hostElement = document.getElementById("app");
+            const importedNode = document.importNode(this.templateElement.content, true);
+            this.element = importedNode.firstElementChild;
+            this.element.id = "user-input";
+            this.titleInputElement = this.element.querySelector("#title");
+            this.descriptionInputElement = this.element.querySelector("#description");
+            this.peopleInputElement = this.element.querySelector("#people");
+            this.configure();
+            this.attach();
+        }
+        gatherUserInput() {
+            const enteredTitle = this.titleInputElement.value;
+            const enteredDescription = this.descriptionInputElement.value;
+            const enteredPeople = this.peopleInputElement.value;
+            if (enteredTitle.trim().length === 0 ||
+                enteredDescription.trim().length === 0 ||
+                enteredPeople.trim().length === 0) {
+                alert("Invalid input, please try again!");
+                return;
+            }
+            else {
+                return [enteredTitle, enteredDescription, +enteredPeople];
             }
         }
-    }
-    return isValid;
-}
-let Course = (() => {
-    class Course {
-        constructor(t, p) {
-            this.title = t;
-            this.price = p;
+        clearInputs() {
+            this.titleInputElement.value = '';
+            this.descriptionInputElement.value = '';
+            this.peopleInputElement.value = '';
+        }
+        submitHandler(event) {
+            event.preventDefault();
+            const userInput = this.gatherUserInput();
+            if (Array.isArray(userInput)) {
+                const [title, desc, people] = userInput;
+                console.log(title, desc, people);
+                this.clearInputs();
+            }
+        }
+        configure() {
+            this.element.addEventListener("submit", this.submitHandler);
+        }
+        attach() {
+            this.hostElement.insertAdjacentElement("afterbegin", this.element);
         }
     }
     __decorate([
-        Required
-    ], Course.prototype, "title", void 0);
-    __decorate([
-        PositiveNumber
-    ], Course.prototype, "price", void 0);
-    return Course;
+        autobind
+    ], ProjectInput.prototype, "submitHandler", null);
+    return ProjectInput;
 })();
-const courseForm = document.querySelector('form');
-courseForm.addEventListener('submit', event => {
-    event.preventDefault();
-    const titleEl = document.getElementById('title');
-    const priceEl = document.getElementById('price');
-    const title = titleEl.value;
-    const price = +priceEl.value;
-    const createdCourse = new Course(title, price);
-    if (!validate(createdCourse)) {
-        alert('Invalid input, please try again');
-        return;
-    }
-    console.log(createdCourse);
-});
+const prjInput = new ProjectInput();
